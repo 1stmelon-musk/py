@@ -1,4 +1,4 @@
-name: Build and deploy Python app to Azure Web App - pls20240920173633
+name: Build and deploy Python app to Azure Web App
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # or windows-latest, depending on your setup
+    runs-on: ubuntu-latest
     
     steps:
       - uses: actions/checkout@v4
@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'  # Set to your Python version
+          python-version: '3.8'
 
       - name: Install dependencies
         run: |
@@ -40,28 +40,20 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     
-    permissions:
-      id-token: write
-
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: python-app
       
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}   # Client ID of your app
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}   # Tenant ID of your Azure tenant
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} # Azure Subscription ID
-        env:
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}  # Ensure Client Secret is added to GitHub Secrets
+      - name: Login to Azure using Azure CLI
+        run: |
+          az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'pls20240920173633'  # Replace with your app service name
+          app-name: 'your-webapp-name'  # Replace with your app service name
           slot-name: 'Production'
           package: './app.zip'
