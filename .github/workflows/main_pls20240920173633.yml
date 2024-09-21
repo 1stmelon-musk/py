@@ -1,35 +1,65 @@
-trigger:
-- main  # Or your branch
+name: Build and deploy Python app to Azure Web App - pls20240920173633
 
-pool:
-  vmImage: 'ubuntu-latest'
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
-steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '3.x'  # Adjust according to your Python version
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Switch to Linux (or keep Windows if you prefer)
+    
+    steps:
+      - uses: actions/checkout@v4
 
-- script: |
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-  displayName: 'Install dependencies'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'  # Set to your Python version
 
-- script: |
-    python manage.py collectstatic --noinput  # If you're using Django; adjust as necessary for Flask
-  displayName: 'Collect static files'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-- task: ArchiveFiles@2
-  inputs:
-    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
-    includeRootFolder: false
-    archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
-    replaceExistingArchive: true
+      - name: Zip the application files
+        run: zip -r app.zip .
 
-- task: AzureWebApp@1
-  inputs:
-    azureSubscription: 'AzureSubscriptionName'  # Replace with your Azure subscription
-    appName: 'AppServiceName'  # Replace with your App Service name
-    package: '$(Build.ArtifactStagingDirectory)/app.zip'
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-app
+          path: ./app.zip
 
-          
+  deploy:
+    runs-on: ubuntu-latest  # You can use 'windows-latest' if necessary, but Linux is common for Python
+
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    
+    permissions:
+      id-token: write  # This is required for requesting the JWT
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+      
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'pls20240920173633'  # Replace with your app service name
+          slot-name: 'Production'
+          package: './app.zip'
