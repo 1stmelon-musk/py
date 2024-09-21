@@ -32,11 +32,6 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: python-app
-      
       - name: Login to Azure using Azure CLI
         run: |
           az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
@@ -47,4 +42,5 @@ jobs:
         with:
           app-name: 'your-webapp-name'  # Replace with your app service name
           slot-name: 'Production'
-          package: './'  # Deploy everything in the current directory
+          package: '.'  # Deploy everything in the current directory
+
