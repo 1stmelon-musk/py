@@ -23,15 +23,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Zip the application files
-        run: zip -r app.zip .
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-app
-          path: ./app.zip
-
   deploy:
     runs-on: ubuntu-latest
 
@@ -56,4 +47,4 @@ jobs:
         with:
           app-name: 'your-webapp-name'  # Replace with your app service name
           slot-name: 'Production'
-          package: './app.zip'
+          package: './'  # Deploy everything in the current directory
