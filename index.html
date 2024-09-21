@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Grid</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            position: relative;
+            width: 80vw;
+            height: 80vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(100, 1fr); /* Changed to 100 columns */
+            grid-template-rows: repeat(100, 1fr); /* Changed to 100 rows */
+            gap: 0;
+            width: 1000px;
+            height: 1000px; /* Adjusted dimensions for 100x100 grid */
+            position: relative;
+            transform-origin: center;
+        }
+
+        .grid-square {
+            width: 10px; /* Adjusted size for smaller squares */
+            height: 10px;
+            background-color: transparent;
+            transition: background-color 0.3s ease-in-out;
+        }
+
+            .grid-square.selected {
+                outline: 2px solid black;
+            }
+
+        .color-options {
+            display: none;
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(2, 40px);
+            gap: 5px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+        }
+
+        .zoom {
+            transform-origin: center;
+            transition: transform 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="grid" class="grid zoom"></div>
+    </div>
+
+    <div class="color-options">
+        <!-- Color options will be generated dynamically -->
+    </div>
+
+    <script>
+        const colors = [
+            '#FF4500', '#FFA800', '#FFD635', '#00A368', '#7EED56', '#2450A4', '#3690EA', '#51E9F4', '#811E9F', '#B44AC0',
+            '#FF99AA', '#9C6926', '#FFFFFF', '#D4D7D9', '#898D90', '#000000', '#00A368', '#FF3881', '#00756F', '#009EAA',
+            '#493AC1', '#00A368', '#00CC78', '#6D482F', '#6D001A', '#FFF8D8', '#00CCC0', '#94B3FF', '#E4ABFF', '#DE107F',
+            '#FFB470', '#515252'
+        ];
+
+        let selectedColor = null;
+        let selectedSquare = null;
+        let isDragging = false;
+        let startX, startY, scrollLeft, scrollTop;
+
+        function createColorPalette() {
+            const palette = document.querySelector('.color-options');
+            colors.forEach(color => {
+                const colorDiv = document.createElement('div');
+                colorDiv.classList.add('color-option');
+                colorDiv.style.backgroundColor = color;
+                colorDiv.addEventListener('click', () => selectColor(color));
+                palette.appendChild(colorDiv);
+            });
+        }
+
+        function selectColor(color) {
+            selectedColor = color;
+            if (selectedSquare) {
+                selectedSquare.style.backgroundColor = selectedColor;
+                selectedSquare.classList.remove('selected');
+                selectedSquare = null;
+                document.querySelector('.color-options').style.display = 'none';
+            }
+        }
+
+        function createGrid() {
+            const grid = document.getElementById('grid');
+            for (let i = 0; i < 10000; i++) {  // 100x100 grid (100 * 100 = 10,000 squares)
+                const square = document.createElement('div');
+                square.className = 'grid-square';
+                square.addEventListener('click', function () {
+                    if (selectedSquare) {
+                        selectedSquare.classList.remove('selected');
+                    }
+                    selectedSquare = square
+                    selectedSquare.classList.add('selected');
+                    document.querySelector('.color-options').style.display = 'grid';
+                });
+                grid.appendChild(square);
+            }
+        }
+
+        function handleZoom(event) {
+            event.preventDefault();
+            const zoomElement = document.querySelector('.zoom');
+            let zoomLevel = parseFloat(zoomElement.style.transform.replace('scale(', '').replace(')', '')) || 1;
+            if (event.deltaY < 0) {
+                zoomLevel = Math.min(2, zoomLevel + 0.1);
+            } else {
+                zoomLevel = Math.max(0.5, zoomLevel - 0.1);
+            }
+            zoomElement.style.transform = `scale(${zoomLevel})`;
+        }
+
+        function handleMouseDown(event) {
+            isDragging = true;
+            startX = event.pageX - document.querySelector('.container').offsetLeft;
+            startY = event.pageY - document.querySelector('.container').offsetTop;
+            scrollLeft = document.querySelector('.container').scrollLeft;
+            scrollTop = document.querySelector('.container').scrollTop;
+            document.querySelector('.container').style.cursor = 'grabbing';
+        }
+
+        function handleMouseMove(event) {
+            if (!isDragging) return;
+            const x = event.pageX - document.querySelector('.container').offsetLeft;
+            const y = event.pageY - document.querySelector('.container').offsetTop;
+            const walkX = x - startX;
+            const walkY = y - startY;
+            document.querySelector('.container').scrollLeft = scrollLeft - walkX;
+            document.querySelector('.container').scrollTop = scrollTop - walkY;
+        }
+
+        function handleMouseUp() {
+            isDragging = false;
+            document.querySelector('.container').style.cursor = 'grab';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            createGrid();
+            createColorPalette();
+            document.querySelector('.grid').addEventListener('wheel', handleZoom);
+            document.querySelector('.container').addEventListener('mousedown', handleMouseDown);
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        });
+    </script>
+</body>
+</html>
