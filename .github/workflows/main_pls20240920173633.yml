@@ -52,9 +52,10 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_00000002-0000-0000-c000-000000000000 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_3c654404-49ac-4abc-9fd1-563fbf81abea }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_13d9d7b3-23bf-4145-a004-395bfc117df1 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+          client-secret: ${{ secrets.AZUREAPPSERVICE_CLIENTSECRET }}  # You should have created a client secret for your app and added it as a GitHub secret
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -63,3 +64,4 @@ jobs:
           app-name: 'pls20240920173633'  # Replace with your app service name
           slot-name: 'Production'
           package: './app.zip'
+
